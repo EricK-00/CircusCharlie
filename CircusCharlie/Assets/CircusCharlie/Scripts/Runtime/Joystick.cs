@@ -60,11 +60,11 @@ public class Joystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, I
         joystickPad.anchoredPosition = Vector2.zero;
     }
 
-    public void OnDrawGizmos(PointerEventData ped)
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(joystick.anchoredPosition / uiCanvas.scaleFactor, (Vector2)Input.mousePosition);
-    }
+    //public void OnDrawGizmos(PointerEventData ped)
+    //{
+    //    Gizmos.color = Color.yellow;
+    //    Gizmos.DrawLine(joystick.anchoredPosition / uiCanvas.scaleFactor, (Vector2)Input.mousePosition);
+    //}
 
     public void OnDrag(PointerEventData ped)
     {
