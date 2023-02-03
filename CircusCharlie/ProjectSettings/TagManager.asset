@@ -8,6 +8,8 @@ TagManager:
   - Obstacles
   - ScoreZone
   - Bag
+  - LeftWall
+  - RightWall
   layers:
   - Default
   - TransparentFX

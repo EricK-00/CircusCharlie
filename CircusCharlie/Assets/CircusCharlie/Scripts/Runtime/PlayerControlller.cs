@@ -1,77 +1,172 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class PlayerControlller : MonoBehaviour
 {
-    private const float SPEED = 2f;
+    private const float SPEED = 3f;
+    private const float JUMP_FORCE = 375;
+    private const int MAP_COUNT = 2;
+    private float mapWidth;
+    private float playerStartX;
+    private float mapStartX;
+    private float bgScrollingEndX;
     
     [SerializeField]
-    private GameObject backGround;
+    private GameObject[] map = new GameObject[2];
     [SerializeField]
-    private GameObject additionPos;
+    private GameObject scoreAdditionPos;
     [SerializeField]
-    private GameObject charlie;
+    private Animator charlieAnim;
+    [SerializeField]
+    private Animator lionAnim;
 
     private Rigidbody2D rb;
     private bool isJumped = false;
     private int scrollDirection;
     private int accumulatedScore = 0;
 
+    private bool playerMoveMode = false;
+    private bool isLeftLocked = false;
+    private bool isRightLocked = false;
+
+    private enum Direction
+    {
+        Left = -1,
+        Right = 1,
+    }
+
+    private void Awake()
+    {
+        mapWidth = map[0].GetComponent<RectTransform>().rect.width;
+        playerStartX = transform.localPosition.x;
+        mapStartX = map[0].transform.localPosition.x - playerStartX;
+        bgScrollingEndX = mapStartX - mapWidth * (MAP_COUNT - 1);
+
+        rb = GetComponent<Rigidbody2D>();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        charlie.GetComponent<Animator>().SetBool("isMove", false);
+        charlieAnim.SetBool("isMove", false);
+        lionAnim.SetBool("isMove", false);
+
+        if (bgScrollingEndX - playerStartX >= map[0].transform.localPosition.x - transform.localPosition.x)
+        {
+            playerMoveMode = true;
+        }
+        else
+        {
+            transform.localPosition = new Vector2 (-400, transform.localPosition.y);
+            playerMoveMode = false;
+        }
 
         if (isJumped)
         {
-            backGround.transform.Translate(scrollDirection * SPEED * Time.deltaTime, 0, 0);
+            if ((scrollDirection == -1 && isLeftLocked) ||
+                (scrollDirection == 1 && isRightLocked))
+            {
+                return;
+            }
+
+            if (playerMoveMode)
+            {
+                Move(scrollDirection, gameObject);
+            }
+            else
+            {
+                Move(-scrollDirection, map);
+            }
             return;
         }
 
         if (Input.GetKey(KeyCode.LeftArrow))
         {
-            //Left
-            backGround.transform.Translate(1 * SPEED * Time.deltaTime, 0, 0);
-
             //Left + Jump
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                rb?.AddForce(Vector2.up * 350);
-                isJumped = true;
-                scrollDirection = 1;
+                Jump(-1);
                 return;
             }
 
-            charlie.GetComponent<Animator>().SetBool("isMove", true);
+            //Left
+            //이동 제한
+            if (isLeftLocked)
+            {
+                return;
+            }
+            if (playerMoveMode)
+            {
+                Move(-1, gameObject);
+            }
+            else
+            {
+                Move(1, map);
+            }
+
+            charlieAnim.SetBool("isMove", true);
+            lionAnim.SetBool("isMove", true);
         }
         else if (Input.GetKey(KeyCode.RightArrow))
         {
-            //Right
-            backGround.transform.Translate(-1 * SPEED * Time.deltaTime, 0, 0);
-
             //Right + Jump
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                rb?.AddForce(Vector2.up * 350);
-                isJumped = true;
-                scrollDirection = -1;
+                Jump(1);
                 return;
             }
 
-            charlie.GetComponent<Animator>().SetBool("isMove", true);
+            //Right
+            //이동 제한
+            if (isRightLocked)
+            {
+                return;
+            }
+            if (playerMoveMode)
+            {
+                Move(1, gameObject);
+            }
+            else
+            {
+                Move(-1, map);
+            }
+
+            charlieAnim.SetBool("isMove", true);
+            lionAnim.SetBool("isMove", true);
         }
         else if (Input.GetKeyDown(KeyCode.Space))
         {
-            rb?.AddForce(Vector2.up * 350);
+            Jump(0);
+        }
+    }
+
+    private void Move(int moveDirection, params GameObject[] targets)
+    {
+        foreach (var go in targets)
+        {
+            go.transform.Translate(moveDirection * SPEED * Time.deltaTime, 0, 0);
+        }
+    }
+
+    private void Jump(int moveDirection)
+    {
+        if (!isJumped)
+        {
             isJumped = true;
+            scrollDirection = moveDirection;
+            rb?.AddForce(Vector2.up * JUMP_FORCE);
+            charlieAnim.SetBool("isMove", false);
+            lionAnim.SetBool("isJump", true);
         }
     }
 
@@ -83,31 +178,55 @@ public class PlayerControlller : MonoBehaviour
             isJumped = false;
             scrollDirection = 0;
             accumulatedScore = 0;
+            lionAnim.SetBool("isJump", false);
             Debug.Log("착지 + 점수 계산");
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (collision.gameObject.tag == "Obstacles")
+        if (other.gameObject.tag == "Obstacles")
         {
-            Debug.Log("플레이어 사망 + 게임 멈추기");
+            Die();
         }
-        else if (collision.gameObject.tag == "ScoreZone")
+        else if (other.gameObject.tag == "ScoreZone")
         {
             accumulatedScore += 100;
         }
-        else if (collision.gameObject.tag == "Bag")
+        else if (other.gameObject.tag == "Bag")
         {
-            collision.gameObject.SetActive(false);
+            other.gameObject.SetActive(false);
             accumulatedScore += 500;
             GameManager.Instance.AddScore(500);
-            StartCoroutine(GameManager.Instance.ShowScoreAdded(500, additionPos.transform.position));
+            StartCoroutine(GameManager.Instance.ShowScoreAdded(500, scoreAdditionPos.transform.position));
+        }
+        else if (other.gameObject.tag == "LeftWall")
+        {
+            isLeftLocked = true;
+        }
+        else if (other.gameObject.tag == "RightWall")
+        {
+            isRightLocked = true;
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        Debug.Log("!");
+        if (other.gameObject.tag == "LeftWall")
+        {
+            Debug.Log("a");
+            isLeftLocked = false;
+        }
+        else if (other.gameObject.tag == "RightWall")
+        {
+            Debug.Log("b");
+            isRightLocked = false;
         }
     }
 
     private void Die()
     {
-
+        Debug.Log("플레이어 사망 + 게임 멈추기");
     }
 }

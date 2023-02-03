@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class FireRing : MonoBehaviour
 {
-    [SerializeField]
     private float speed = 1f;
 
     // Start is called before the first frame update
