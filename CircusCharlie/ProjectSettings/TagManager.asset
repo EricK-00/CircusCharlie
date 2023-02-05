@@ -7,9 +7,11 @@ TagManager:
   - Ground
   - Obstacles
   - ScoreZone
-  - Bag
   - LeftWall
   - RightWall
+  - SpecialScoreZone
+  - Floor
+  - Ball
   layers:
   - Default
   - TransparentFX

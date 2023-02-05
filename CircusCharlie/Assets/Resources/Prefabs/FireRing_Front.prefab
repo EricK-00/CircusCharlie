@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 354798230224009734}
   - component: {fileID: 354798230224009729}
   m_Layer: 5
-  m_Name: FireLoop_Front
+  m_Name: FireRing_Front
   m_TagString: Obstacles
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

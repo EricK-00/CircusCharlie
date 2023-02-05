@@ -7,7 +7,7 @@ public class TimeBonus : MonoBehaviour
 {
     private const float waitTime = 0.5f;
     private const int MAX = 5000;
-    private int bonus = MAX;
+    public int bonus = MAX;
     private TMP_Text timeBonusText;
 
     private void Awake()
@@ -25,13 +25,13 @@ public class TimeBonus : MonoBehaviour
     {
         while (true)
         {
+            yield return new WaitForSeconds(waitTime);
+
             if (bonus > 0)
             {
                 bonus -= 10;
                 timeBonusText.text = $"BONUS - {bonus.ToString().PadLeft(4, '0')}";
             }
-
-            yield return new WaitForSeconds(waitTime);
         }
     }
 }

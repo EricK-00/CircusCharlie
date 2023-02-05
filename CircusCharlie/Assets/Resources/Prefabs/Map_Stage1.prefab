@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2593842646835757180}
   m_Layer: 5
-  m_Name: Map
+  m_Name: Map_Stage1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

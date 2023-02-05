@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -7,6 +8,9 @@ using UnityEngine.EventSystems;
 public class Joystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler
 {
     private const float SPEED = 3f;
+    private static bool isLeftPressed;
+    private static bool isRightPressed;
+
 
     [SerializeField]
     private Canvas uiCanvas;
@@ -16,48 +20,66 @@ public class Joystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, I
     private RectTransform joystickPad;
     private RectTransform joystick;
 
-    [SerializeField]
-    private bool isReversed = false;
     private float joystickRadius;
     private int leftDirection;
 
-    void Awake()
+    public static bool GetKeyLeft()
     {
-        joystick = GetComponent<RectTransform>();
-        joystickRadius = joystick.rect.width / 2;
-        leftDirection = isReversed ? 1 : -1;
+        return isLeftPressed;
     }
 
-    void Update()
+    public static bool GetKeyRight()
     {
-        if (Mathf.Abs(joystickPad.anchoredPosition.x) < float.Epsilon)
-        {
-            return;
-        }
-        else if (joystickPad.anchoredPosition.x < 0)
-        {
-            //Left
-            controlTarget.transform.Translate(leftDirection * SPEED * Time.deltaTime, 0, 0);
-        }
-        else
-        {
-            //Right
-            controlTarget.transform.Translate(-leftDirection * SPEED * Time.deltaTime, 0, 0);
-        }
+        return isRightPressed;
+    }
+
+
+    private void Awake()
+    {
+        isLeftPressed = false;
+        isRightPressed = false;
+
+        joystick = GetComponent<RectTransform>();
+        joystickRadius = joystick.rect.width / 2;
     }
 
     public void OnPointerDown(PointerEventData ped)
+    {
+        MoveJoystickPad(ped);
+    }
+
+    public void OnPointerUp(PointerEventData ped)
+    {
+        joystickPad.anchoredPosition = Vector2.zero;
+        isLeftPressed = false;
+        isRightPressed = false;
+    }
+
+    public void OnDrag(PointerEventData ped)
+    {
+        MoveJoystickPad(ped);
+    }
+
+    private void MoveJoystickPad(PointerEventData ped)
     {
         Vector2 inputVec = ped.position / uiCanvas.scaleFactor - joystick.anchoredPosition;
 
         inputVec = inputVec.magnitude > joystickRadius ? inputVec * (joystickRadius / inputVec.magnitude) : inputVec;
 
         joystickPad.anchoredPosition = inputVec;
-    }
 
-    public void OnPointerUp(PointerEventData ped)
-    {
-        joystickPad.anchoredPosition = Vector2.zero;
+        if (joystickPad.anchoredPosition.x < 0)
+        {
+            //Left
+            isLeftPressed = true;
+            isRightPressed = false;
+        }
+        else if (joystickPad.anchoredPosition.x > 0)
+        {
+            //Right
+            isLeftPressed = false;
+            isRightPressed = true;
+        }
     }
 
     //public void OnDrawGizmos(PointerEventData ped)
@@ -65,13 +87,4 @@ public class Joystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, I
     //    Gizmos.color = Color.yellow;
     //    Gizmos.DrawLine(joystick.anchoredPosition / uiCanvas.scaleFactor, (Vector2)Input.mousePosition);
     //}
-
-    public void OnDrag(PointerEventData ped)
-    {
-        Vector2 inputVec = ped.position / uiCanvas.scaleFactor - joystick.anchoredPosition;
-
-        inputVec = inputVec.magnitude > joystickRadius ? inputVec * (joystickRadius / inputVec.magnitude) : inputVec;
-
-        joystickPad.anchoredPosition = inputVec;
-    }
 }

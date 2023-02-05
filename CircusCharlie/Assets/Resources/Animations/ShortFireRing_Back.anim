@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Charlie_Move
+  m_Name: ShortFireRing_Back
   serializedVersion: 6
   m_Legacy: 0
   m_Compressed: 0
@@ -20,11 +20,11 @@ AnimationClip:
   m_PPtrCurves:
   - curve:
     - time: 0
-      value: {fileID: -1300826922, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
+      value: {fileID: -1827289983, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
     - time: 0.1
-      value: {fileID: -1890060112, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
+      value: {fileID: 1699857339, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
     - time: 0.2
-      value: {fileID: -1890060112, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
+      value: {fileID: 1699857339, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
     attribute: m_Sprite
     path: 
     classID: 114
@@ -44,9 +44,9 @@ AnimationClip:
       customType: 0
       isPPtrCurve: 1
     pptrCurveMapping:
-    - {fileID: -1300826922, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
-    - {fileID: -1890060112, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
-    - {fileID: -1890060112, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
+    - {fileID: -1827289983, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
+    - {fileID: 1699857339, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
+    - {fileID: 1699857339, guid: 96c256db7e200e9419b00932d0cc07ad, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}

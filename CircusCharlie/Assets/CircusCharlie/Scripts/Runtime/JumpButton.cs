@@ -1,26 +1,29 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class JumpButton : MonoBehaviour
+public class JumpButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
-    [SerializeField]
-    private Rigidbody2D playerRb;
+    private static bool isJumpPressed;
 
-    // Start is called before the first frame update
-    void Start()
+    public static bool GetKeyJump()
     {
-        
+        return isJumpPressed;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Awake()
     {
-        
+        isJumpPressed = false;
     }
 
-    public void OnJumpButton()
+    public void OnPointerDown(PointerEventData ped)
     {
-        playerRb?.AddForce(Vector2.up * 300);
+        isJumpPressed = true;
+    }
+
+    public void OnPointerUp(PointerEventData ped)
+    {
+        isJumpPressed = false;
     }
 }

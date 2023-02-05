@@ -9,91 +9,72 @@ public class PlayerControlller : MonoBehaviour
 {
     private const float SPEED = 3f;
     private const float JUMP_FORCE = 375;
-    private const int MAP_COUNT = 2;
     private float mapWidth;
     private float playerStartX;
     private float mapStartX;
     private float bgScrollingEndX;
-    
+
     [SerializeField]
-    private GameObject[] map = new GameObject[2];
+    private GameObject[] backgrounds;
+    [SerializeField]
+    private GameObject[] characters;
     [SerializeField]
     private GameObject scoreAdditionPos;
     [SerializeField]
     private Animator charlieAnim;
     [SerializeField]
-    private Animator lionAnim;
+    private Animator mountAnim;
+    [SerializeField]
+    private RectTransform playerRect;
 
-    private Rigidbody2D rb;
+    private Rigidbody2D playerRb;
+    private RectTransform ballRect;
+
     private bool isJumped = false;
-    private int scrollDirection;
+    private int moveDirection;
     private int accumulatedScore = 0;
 
     private bool playerMoveMode = false;
     private bool isLeftLocked = false;
     private bool isRightLocked = false;
 
-    private enum Direction
-    {
-        Left = -1,
-        Right = 1,
-    }
+    private bool isAdditionAdded  = false;
+    private float ballYPos = -64f;
+    private int ballCounter = 0;
 
     private void Awake()
     {
-        mapWidth = map[0].GetComponent<RectTransform>().rect.width;
+        mapWidth = backgrounds[0].GetComponent<RectTransform>().rect.width;
         playerStartX = transform.localPosition.x;
-        mapStartX = map[0].transform.localPosition.x - playerStartX;
-        bgScrollingEndX = mapStartX - mapWidth * (MAP_COUNT - 1);
+        mapStartX = backgrounds[0].transform.localPosition.x - playerStartX;
+        bgScrollingEndX = mapStartX - mapWidth * (GameManager.Instance.GetMapSize(GameManager.Instance.Stage) - 1);
 
-        rb = GetComponent<Rigidbody2D>();
+        playerRb = GetComponent<Rigidbody2D>();
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         charlieAnim.SetBool("isMove", false);
-        lionAnim.SetBool("isMove", false);
+        if (mountAnim != null)
+        mountAnim.SetBool("isMove", false);
 
-        if (bgScrollingEndX - playerStartX >= map[0].transform.localPosition.x - transform.localPosition.x)
-        {
-            playerMoveMode = true;
-        }
-        else
-        {
-            transform.localPosition = new Vector2 (-400, transform.localPosition.y);
-            playerMoveMode = false;
-        }
+        playerMoveMode = (bgScrollingEndX - playerStartX >= backgrounds[0].transform.localPosition.x - transform.localPosition.x) ? true : false;
 
         if (isJumped)
         {
-            if ((scrollDirection == -1 && isLeftLocked) ||
-                (scrollDirection == 1 && isRightLocked))
+            if ((moveDirection == -1 && isLeftLocked) ||
+                (moveDirection == 1 && isRightLocked))
             {
                 return;
             }
-
-            if (playerMoveMode)
-            {
-                Move(scrollDirection, gameObject);
-            }
-            else
-            {
-                Move(-scrollDirection, map);
-            }
+            Move(moveDirection);
             return;
         }
 
-        if (Input.GetKey(KeyCode.LeftArrow))
+        if (Input.GetKey(KeyCode.LeftArrow) || Joystick.GetKeyLeft())
         {
             //Left + Jump
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space) || JumpButton.GetKeyJump())
             {
                 Jump(-1);
                 return;
@@ -105,22 +86,16 @@ public class PlayerControlller : MonoBehaviour
             {
                 return;
             }
-            if (playerMoveMode)
-            {
-                Move(-1, gameObject);
-            }
-            else
-            {
-                Move(1, map);
-            }
+            Move(-1);
 
             charlieAnim.SetBool("isMove", true);
-            lionAnim.SetBool("isMove", true);
+            if (mountAnim != null)
+                mountAnim.SetBool("isMove", true);
         }
-        else if (Input.GetKey(KeyCode.RightArrow))
+        else if (Input.GetKey(KeyCode.RightArrow) || Joystick.GetKeyRight())
         {
             //Right + Jump
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space) || JumpButton.GetKeyJump())
             {
                 Jump(1);
                 return;
@@ -132,41 +107,58 @@ public class PlayerControlller : MonoBehaviour
             {
                 return;
             }
-            if (playerMoveMode)
-            {
-                Move(1, gameObject);
-            }
-            else
-            {
-                Move(-1, map);
-            }
+            Move(1);
 
             charlieAnim.SetBool("isMove", true);
-            lionAnim.SetBool("isMove", true);
+            if (mountAnim != null)
+                mountAnim.SetBool("isMove", true);
         }
-        else if (Input.GetKeyDown(KeyCode.Space))
+        else if (Input.GetKeyDown(KeyCode.Space) || JumpButton.GetKeyJump())
         {
             Jump(0);
         }
-    }
-
-    private void Move(int moveDirection, params GameObject[] targets)
-    {
-        foreach (var go in targets)
+        else
         {
-            go.transform.Translate(moveDirection * SPEED * Time.deltaTime, 0, 0);
+            moveDirection = 0;
         }
     }
 
-    private void Jump(int moveDirection)
+    private void Move(int direction)
+    {
+        moveDirection = direction;
+        GameObject[] targets = playerMoveMode ? characters : backgrounds;
+        direction = playerMoveMode ? direction : -direction;
+
+        foreach (var go in targets)
+        {
+            if (go != null)
+                go.transform.Translate(direction * SPEED * Time.deltaTime, 0, 0);
+        }
+    }
+
+    private void Jump(int direction)
     {
         if (!isJumped)
         {
             isJumped = true;
-            scrollDirection = moveDirection;
-            rb?.AddForce(Vector2.up * JUMP_FORCE);
+            moveDirection = direction;
+            playerRb?.AddForce(Vector2.up * JUMP_FORCE);
             charlieAnim.SetBool("isMove", false);
-            lionAnim.SetBool("isJump", true);
+            charlieAnim.SetBool("isJump", true);
+            if (mountAnim != null)
+            {
+                if (mountAnim.name == "Lion")
+                {
+                    mountAnim.SetBool("isJump", true);
+                }
+                else if (mountAnim.name == "Ball")
+                {
+                    if (direction == 0)
+                        return;
+
+                    //DismountBall(moveDirection);
+                }
+            }
         }
     }
 
@@ -174,37 +166,67 @@ public class PlayerControlller : MonoBehaviour
     {
         if (collision.gameObject.tag == "Ground")
         {
-            GameManager.Instance.AddScore(accumulatedScore);
-            isJumped = false;
-            scrollDirection = 0;
-            accumulatedScore = 0;
-            lionAnim.SetBool("isJump", false);
-            Debug.Log("착지 + 점수 계산");
+            AddScore();
+            Land();
         }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.tag == "Obstacles")
+        if (other.tag == "Obstacles")
         {
             Die();
         }
-        else if (other.gameObject.tag == "ScoreZone")
+        else if (other.tag == "ScoreZone")
         {
             accumulatedScore += 100;
+
+            if (other.transform.parent.tag == "Ball")
+            {
+                ++ballCounter;
+                if (ballCounter == 2)
+                {
+                    isAdditionAdded = true;
+                    accumulatedScore -= 100;
+                }
+            }
+
         }
-        else if (other.gameObject.tag == "Bag")
+        else if (other.tag == "SpecialScoreZone")
         {
-            other.gameObject.SetActive(false);
-            accumulatedScore += 500;
-            GameManager.Instance.AddScore(500);
-            StartCoroutine(GameManager.Instance.ShowScoreAdded(500, scoreAdditionPos.transform.position));
+            if (other.name == "Bag")
+            {
+                other.gameObject.SetActive(false);
+                GameManager.Instance.AddScore(500);
+                StartCoroutine(GameManager.Instance.ShowScoreAdded(500, scoreAdditionPos.transform.position));
+            }
+            else
+            {
+                isAdditionAdded = true;
+            }
         }
-        else if (other.gameObject.tag == "LeftWall")
+        else if (other.tag == "Floor" && playerRb.velocity.y <= 0)
+        {
+            playerRb.velocity = new Vector2(playerRb.velocity.x, 0);
+            playerRb.gravityScale = 0f;
+
+            AddScore();
+            Land();
+
+            if (other.name == "GoalFloor")
+            {
+                //스테이지 클리어
+            }
+            else if (other.name == "BallFloor")
+            {
+                MountBall(other.gameObject);
+            }
+        }
+        else if (other.tag == "LeftWall")
         {
             isLeftLocked = true;
         }
-        else if (other.gameObject.tag == "RightWall")
+        else if (other.tag == "RightWall")
         {
             isRightLocked = true;
         }
@@ -212,21 +234,76 @@ public class PlayerControlller : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        Debug.Log("!");
-        if (other.gameObject.tag == "LeftWall")
+        if (other.tag == "LeftWall")
         {
-            Debug.Log("a");
             isLeftLocked = false;
         }
-        else if (other.gameObject.tag == "RightWall")
+        else if (other.tag == "RightWall")
         {
-            Debug.Log("b");
             isRightLocked = false;
         }
+        else if (other.tag == "Floor" && other.name == "BallFloor")
+        {
+            isJumped = true;
+            playerRb.gravityScale = 1f;
+
+            //제자리 점프
+            if (moveDirection == 0)
+                return;
+
+            DismountBall();
+        }
+    }
+
+    private void AddScore()
+    {
+        if (isAdditionAdded)
+        {
+            accumulatedScore += 500;
+            StartCoroutine(GameManager.Instance.ShowScoreAdded(500, scoreAdditionPos.transform.position));
+            isAdditionAdded = false;
+        }
+
+        GameManager.Instance.AddScore(accumulatedScore);
+        accumulatedScore = 0;
+        ballCounter = 0;
+    }
+
+    private void Land()
+    {
+        isJumped = false;
+        moveDirection = 0;
+        charlieAnim.SetBool("isJump", false);
+        if (mountAnim != null && mountAnim.name == "Lion")
+            mountAnim.SetBool("isJump", false);
     }
 
     private void Die()
     {
         Debug.Log("플레이어 사망 + 게임 멈추기");
+    }
+
+    private void MountBall(GameObject ball)
+    {
+        if (characters[1] == null && mountAnim == null)
+        {
+            characters[1] = ball.transform.parent.gameObject;
+            ballRect = characters[1].GetComponent<RectTransform>();
+            ballRect.SetParent(playerRect);
+            ballRect.localPosition = new Vector2(characters[0].transform.localPosition.x, ballYPos);
+            characters[1].GetComponent<Ball>().Mounted(this);
+            mountAnim = characters[1].GetComponent<Animator>();
+        }
+    }
+
+    public void DismountBall()
+    {
+        if (characters[1] != null && mountAnim != null)
+        {
+            ballRect.SetParent(backgrounds[1].GetComponent<RectTransform>());
+            characters[1].GetComponent<Ball>().Dismounted(-moveDirection);
+            mountAnim = null;
+            characters[1] = null;
+        }
     }
 }
