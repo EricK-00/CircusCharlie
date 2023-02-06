@@ -8,18 +8,24 @@ public static partial class Functions
     {
         GameObject searchTarget;
 
+        Debug.Log($"PGO{parentGO}, CDN{childName}");
+
         for (int i = 0; i < parentGO.transform.childCount; i++)
         {
             searchTarget = parentGO.transform.GetChild(i).gameObject;
             if (searchTarget.name.Equals(childName))
             {
+                Debug.Log(searchTarget);
                 return searchTarget;
             }
             else
             {
                 GameObject go = FindChildGameObject(searchTarget, childName);
                 if (go != null)
+                {
+                    Debug.Log(searchTarget);
                     return go;
+                }
             }
         }
 

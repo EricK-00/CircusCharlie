@@ -11,8 +11,8 @@ public class GameManager : MonoBehaviour
     private const int MAX_SCORE = 999999;
     private const int MAX_STAGE = 99;
 
-    public bool GameOver { get; private set; } = false;
-    public int Stage { get; private set; } = 1;
+    public bool GameOver { get; private set; } = true;
+    public int Stage { get; private set; } = 0;
     private int score = 0;
     private int highScore = 0;
 
@@ -24,8 +24,9 @@ public class GameManager : MonoBehaviour
     private TMP_Text scoreText;
     [SerializeField]
     private TMP_Text highScoreText;
-    [SerializeField]
-    private GameObject scoreAdditionTextGO;
+
+    private const string OBJECT_CANVAS_NAME = "ObjectCanvas";
+    private const string SCORE_ADDITION_TEXT_NAME = "ScoreAdditionText";
     private TMP_Text scoreAdditionText;
 
     public static GameManager Instance
@@ -34,7 +35,7 @@ public class GameManager : MonoBehaviour
         {
             if (instance == null)
             {
-                instance = FindGameManager().GetComponent<GameManager>();
+                instance = Functions.GetRootGameObject("GameManager").GetComponent<GameManager>();
                 DontDestroyOnLoad(instance.gameObject);
             }
 
@@ -42,27 +43,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private static GameObject FindGameManager()
-    {
-        GameObject[] rootObjs_ = SceneManager.GetActiveScene().GetRootGameObjects();
-
-        GameObject gameManager = default;
-        foreach (GameObject rootObj in rootObjs_)
-        {
-            if (rootObj.name.Equals("GameManager"))
-            {
-                gameManager = rootObj;
-                return gameManager;
-            }
-            else { continue; }
-        }       // loop
-
-        return gameManager;
-    }
-
     private void Awake()
     {
-        scoreAdditionText = scoreAdditionTextGO.GetComponent<TMP_Text>();
         if (PlayerPrefs.HasKey("HighScore"))
         {
             highScore = PlayerPrefs.GetInt("HighScore");
@@ -93,14 +75,18 @@ public class GameManager : MonoBehaviour
     public IEnumerator ClearStage()
     {
         GameOver = true;
-        Stage = Stage >= MAX_STAGE ? 1 : ++Stage;
 
         //시간 점수 획득
-
+        if (Stage > 0)
+        {
+            AddScore(TimeBonus.Bonus);
+            TimeBonus.ResetTimeBonus();
+        }
 
         PlayerPrefs.SetInt("HighScore", highScore);
+        Stage = Stage >= MAX_STAGE ? 1 : ++Stage;
 
-        yield return new WaitForSecondsRealtime(2f);
+        yield return new WaitForSecondsRealtime(1f);
 
         switch (Stage % 3)
         {
@@ -114,9 +100,14 @@ public class GameManager : MonoBehaviour
                 SceneManager.LoadScene(SCENE_NAMES[2]);
                 break;
         }
-
-        stageText.text = $"STAGE - {highScore.ToString().PadLeft(2, '0')}";
+        stageText.text = $"STAGE - {Stage.ToString().PadLeft(2, '0')}";
         stageStartUI.SetActive(true);
+    }
+
+    public void StartNewStage()
+    {
+        scoreAdditionText = Functions.GetRootGameObject(OBJECT_CANVAS_NAME).FindChildGameObject(SCORE_ADDITION_TEXT_NAME).GetComponent<TMP_Text>();
+        GetComponent<MapGenerator>().GenerateMap();
         GameOver = false;
     }
 
@@ -131,23 +122,23 @@ public class GameManager : MonoBehaviour
 
     public IEnumerator ShowScoreAdded(int addition, Vector2 position)
     {
-        scoreAdditionTextGO.transform.position = position;
-        scoreAdditionTextGO.SetActive(true);
+        scoreAdditionText.transform.position = position;
+        scoreAdditionText.gameObject.SetActive(true);
         scoreAdditionText.text = $"{addition}";
         yield return new WaitForSeconds(1f);
-        scoreAdditionTextGO.SetActive(false);
+        scoreAdditionText.gameObject.SetActive(false);
     }
 
     public int GetMapSize(int stage)
     {
         switch (stage % 3)
         {
-            case 0:
-                return 6;
+            case 1:
+                return 10;
             case 2:
-                return 7;
+                return 10;
             default:
-                return 2;
+                return 10;
         }
     }
 }

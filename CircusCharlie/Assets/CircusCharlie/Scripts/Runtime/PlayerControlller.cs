@@ -47,7 +47,7 @@ public class PlayerControlller : MonoBehaviour
         mapWidth = backgrounds[0].GetComponent<RectTransform>().rect.width;
         playerStartX = transform.localPosition.x;
         mapStartX = backgrounds[0].transform.localPosition.x - playerStartX;
-        bgScrollingEndX = mapStartX - mapWidth * (GameManager.Instance.GetMapSize(GameManager.Instance.Stage) - 1);
+        bgScrollingEndX = mapStartX - mapWidth * (GameManager.Instance.GetMapSize(GameManager.Instance.Stage));
 
         playerRb = GetComponent<Rigidbody2D>();
     }
@@ -215,7 +215,7 @@ public class PlayerControlller : MonoBehaviour
 
             if (other.name == "GoalFloor")
             {
-                //스테이지 클리어
+                StartCoroutine(GameManager.Instance.ClearStage());
             }
             else if (other.name == "BallFloor")
             {

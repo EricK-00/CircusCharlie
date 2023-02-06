@@ -8,4 +8,9 @@ public class UICanvas : MonoBehaviour
     {
         DontDestroyOnLoad(this);
     }
+
+    public void SetCamera()
+    {
+        GetComponent<Canvas>().worldCamera = Camera.main;
+    }
 }

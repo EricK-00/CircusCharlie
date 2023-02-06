@@ -4,16 +4,16 @@ using UnityEngine;
 
 public class StageStartUI : MonoBehaviour
 {
-    [SerializeField]
-    TMP_Text stageText;
+    private TMP_Text stageTextInStartUI;
 
     private void Awake()
     {
-        stageText.text = $"STAGE {GameManager.Instance.Stage.ToString().PadLeft(2, '0')}";
+        stageTextInStartUI = transform.GetChild(0).GetComponent<TMP_Text>();
     }
 
-    private void Start()
+    private void OnEnable()
     {
+        stageTextInStartUI.text = $"STAGE {GameManager.Instance.Stage.ToString().PadLeft(2, '0')}";
         StartCoroutine(ShowStageStageUI());
     }
 
@@ -22,6 +22,7 @@ public class StageStartUI : MonoBehaviour
         Time.timeScale = 0f;
         yield return new WaitForSecondsRealtime(2f);
         Time.timeScale = 1f;
+        GameManager.Instance.StartNewStage();
         gameObject.SetActive(false);
     }
 }

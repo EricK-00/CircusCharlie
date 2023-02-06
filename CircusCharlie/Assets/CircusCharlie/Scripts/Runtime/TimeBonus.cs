@@ -7,13 +7,13 @@ public class TimeBonus : MonoBehaviour
 {
     private const float waitTime = 0.5f;
     private const int MAX = 5000;
-    public int bonus = MAX;
+    public static int Bonus { get; private set; } = MAX;
     private TMP_Text timeBonusText;
 
     private void Awake()
     {
         timeBonusText = GetComponent<TMP_Text>();
-        timeBonusText.text = $"BONUS - {bonus.ToString().PadLeft(4, '0')}";
+        timeBonusText.text = $"BONUS - {Bonus.ToString().PadLeft(4, '0')}";
     }
 
     void Start()
@@ -27,11 +27,16 @@ public class TimeBonus : MonoBehaviour
         {
             yield return new WaitForSeconds(waitTime);
 
-            if (bonus > 0)
+            if (Bonus > 0 && !GameManager.Instance.GameOver)
             {
-                bonus -= 10;
-                timeBonusText.text = $"BONUS - {bonus.ToString().PadLeft(4, '0')}";
+                Bonus -= 10;
+                timeBonusText.text = $"BONUS - {Bonus.ToString().PadLeft(4, '0')}";
             }
         }
+    }
+
+    public static void ResetTimeBonus()
+    {
+        Bonus = 5000;
     }
 }
